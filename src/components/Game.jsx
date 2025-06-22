@@ -12,6 +12,7 @@ export default function Game() {
     const [isDragging, setIsDragging] = useState(false)
     const [isAnimating, setIsAnimating] = useState(false)
     const [animStep, setAnimStep] = useState(0)
+    const [score, setScore] = useState(0)
 
     // Initialize the grid with random colored dots
     useEffect(() => {
@@ -68,9 +69,8 @@ export default function Game() {
     useEffect(() => {
         if (!isAnimating || path.length === 1) return
         if (animStep >= path.length) {
-            // // Animation done, remove dots and update grid
+            // Animation done, remove dots and update grid
             const newGrid = [...grid]
-            
             path.forEach(({ x, y }) => {
                 newGrid[y][x].isEmpty = true
             })
@@ -97,7 +97,6 @@ export default function Game() {
                     }
                 })
             }
-            
             setGrid(newGrid)
             setPath([{ x: characterPos.x, y: characterPos.y }])
             setSelectedColor(null)
@@ -105,10 +104,18 @@ export default function Game() {
             setAnimStep(0)
             return
         }
-        // Move character to next step
+        // Move character to next step and update score for this step
         const nextPos = path[animStep]
         setCharacterPos({ x: nextPos.x, y: nextPos.y })
-        setTimeout(() => {    
+        // Score logic: multiplier depends on current path length (excluding start)
+        const pathLength = animStep // animStep is 1-based for steps taken
+        let multiplier = 1
+        if (pathLength >= 20) multiplier = 2
+        else if (pathLength >= 10) multiplier = 1.5
+        if (animStep > 0) {
+            setScore(s => s + Math.floor(10 * multiplier))
+        }
+        setTimeout(() => {
             setAnimStep(s => s + 1)
         }, 360)
     }, [isAnimating, animStep, path, grid, setCharacterPos])
@@ -176,6 +183,7 @@ export default function Game() {
 
     return (
         <div className="game">
+            <div style={{fontWeight: 'bold', fontSize: '1.3em', marginBottom: 10}}>Score: {score}</div>
             <div
                 className="grid"
                 onMouseLeave={handleMouseUp}
