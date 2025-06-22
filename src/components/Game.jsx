@@ -10,6 +10,8 @@ export default function Game() {
     const [selectedColor, setSelectedColor] = useState(null)
     const [characterPos, setCharacterPos] = useState({ x: CENTER, y: CENTER })
     const [isDragging, setIsDragging] = useState(false)
+    const [isAnimating, setIsAnimating] = useState(false)
+    const [animStep, setAnimStep] = useState(0)
 
     // Initialize the grid with random colored dots
     useEffect(() => {
@@ -61,47 +63,56 @@ export default function Game() {
         }
     }
 
-    const confirmPath = () => {
-        if (path.length === 0) return
-
-        const newGrid = [...grid]
-        
-        // Remove dots from the path
-        path.forEach(({ x, y }) => {
-            newGrid[y][x].isEmpty = true
-        })
-
-        // Move character to the last position in the path
-        const lastPos = path[path.length - 1]
-        setCharacterPos({ x: lastPos.x, y: lastPos.y })
-
-        // Make dots fall
-        for (let x = 0; x < GRID_SIZE; x++) {
-            let emptySpaces = []
-            for (let y = GRID_SIZE - 1; y >= 0; y--) {
-                if (newGrid[y][x].isEmpty) {
-                    emptySpaces.push(y)
-                } else if (emptySpaces.length > 0) {
-                    const newY = emptySpaces[0]
-                    newGrid[newY][x] = newGrid[y][x]
-                    newGrid[y][x] = { isEmpty: true }
-                    emptySpaces.shift()
-                    emptySpaces.unshift(y)
-                }
-            }
-
-            // Fill empty spaces at the top with new dots
-            emptySpaces.forEach(y => {
-                newGrid[y][x] = {
-                    color: COLORS[Math.floor(Math.random() * COLORS.length)],
-                    isEmpty: false
-                }
+    // Animate character along the path
+    useEffect(() => {
+        if (!isAnimating || path.length === 0) return
+        if (animStep >= path.length) {
+            // Animation done, remove dots and update grid
+            const newGrid = [...grid]
+            path.forEach(({ x, y }) => {
+                newGrid[y][x].isEmpty = true
             })
+            // Make dots fall
+            for (let x = 0; x < GRID_SIZE; x++) {
+                let emptySpaces = []
+                for (let y = GRID_SIZE - 1; y >= 0; y--) {
+                    if (newGrid[y][x].isEmpty) {
+                        emptySpaces.push(y)
+                    } else if (emptySpaces.length > 0) {
+                        const newY = emptySpaces[0]
+                        newGrid[newY][x] = newGrid[y][x]
+                        newGrid[y][x] = { isEmpty: true }
+                        emptySpaces.shift()
+                        emptySpaces.unshift(y)
+                    }
+                }
+                // Fill empty spaces at the top with new dots
+                emptySpaces.forEach(y => {
+                    newGrid[y][x] = {
+                        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                        isEmpty: false
+                    }
+                })
+            }
+            setGrid(newGrid)
+            setPath([])
+            setSelectedColor(null)
+            setIsAnimating(false)
+            setAnimStep(0)
+            return
         }
+        // Move character to next step
+        const nextPos = path[animStep]
+        setTimeout(() => {
+            setCharacterPos({ x: nextPos.x, y: nextPos.y })
+            setAnimStep(s => s + 1)
+        }, 180)
+    }, [isAnimating, animStep, path, grid])
 
-        setGrid(newGrid)
-        setPath([])
-        setSelectedColor(null)
+    const confirmPath = () => {
+        if (path.length === 0 || isAnimating) return
+        setIsAnimating(true)
+        setAnimStep(0)
     }
 
     const cancelPath = () => {
@@ -167,27 +178,55 @@ export default function Game() {
                 onTouchMove={handleCellTouchMove}
             >
                 {grid.map((row, y) =>
-                    row.map((cell, x) => (
-                        <div
-                            key={`${x}-${y}`}
-                            data-xy={`${x}-${y}`}
-                            className={`cell ${path.some(pos => pos.x === x && pos.y === y) ? 'path' : ''}`}
-                            onClick={() => handleCellClick(x, y)}
-                            onMouseDown={() => handleCellMouseDown(x, y)}
-                            onMouseEnter={() => handleCellMouseEnter(x, y)}
-                            onTouchStart={e => handleCellTouchStart(e, x, y)}
-                        >
-                            {!cell.isEmpty && (
-                                <div className={`dot ${cell.color}`} />
-                            )}
-                            {characterPos.x === x && characterPos.y === y && (
-                                <div className="character" />
-                            )}
-                        </div>
-                    ))
+                    row.map((cell, x) => {
+                        const isPath = path.some(pos => pos.x === x && pos.y === y)
+                        let hideDot = false
+                        let pathOrder = null
+                        if (isPath) {
+                            pathOrder = path.findIndex(pos => pos.x === x && pos.y === y)
+                        }
+                        if (isAnimating && isPath) {
+                            const idx = path.findIndex(pos => pos.x === x && pos.y === y)
+                            if (idx !== -1 && idx <= animStep) hideDot = true
+                        }
+                        return (
+                            <div
+                                key={`${x}-${y}`}
+                                data-xy={`${x}-${y}`}
+                                className={`cell ${isPath ? 'path' : ''}`}
+                                onClick={() => !isAnimating && handleCellClick(x, y)}
+                                onMouseDown={() => !isAnimating && handleCellMouseDown(x, y)}
+                                onMouseEnter={() => !isAnimating && handleCellMouseEnter(x, y)}
+                                onTouchStart={e => !isAnimating && handleCellTouchStart(e, x, y)}
+                                style={{position: 'relative'}}
+                            >
+                                {!cell.isEmpty && !hideDot && (
+                                    <div className={`dot ${cell.color}`} />
+                                )}
+                                {characterPos.x === x && characterPos.y === y && (
+                                    <div className="character" />
+                                )}
+                                {/* Show path order number in lower right if in path and not animating */}
+                                {isPath && !isAnimating && (
+                                    <span style={{
+                                        position: 'absolute',
+                                        right: 4,
+                                        bottom: 2,
+                                        fontSize: '0.85em',
+                                        color: '#fff',
+                                        background: 'rgba(0,0,0,0.4)',
+                                        borderRadius: '6px',
+                                        padding: '0 4px',
+                                        pointerEvents: 'none',
+                                        zIndex: 3
+                                    }}>{pathOrder + 1}</span>
+                                )}
+                            </div>
+                        )
+                    })
                 )}
             </div>
-            {path.length > 0 && (
+            {path.length > 0 && !isAnimating && (
                 <div className="controls">
                     <button onClick={confirmPath}>Confirm Path</button>
                     <button onClick={cancelPath}>Cancel</button>
