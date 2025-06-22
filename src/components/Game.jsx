@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 
-const COLORS = ['red', 'blue', 'green']
+const ICONS = {
+    red: '/icons-redpepper.png',
+    green: '/icons-lettuce.png',
+    orange: '/icons-carrot.png',
+}
+const COLORS = ['red', 'green', 'orange']
 const GRID_SIZE = 7
 const CENTER = Math.floor(GRID_SIZE / 2)
 
@@ -212,11 +217,30 @@ export default function Game() {
                                 onTouchStart={e => !isAnimating && handleCellTouchStart(e, x, y)}
                                 style={{position: 'relative'}}
                             >
-                                {!cell.isEmpty && !hideDot && (
-                                    <div className={`dot ${cell.color}`} />
+                                {!cell.isEmpty && !hideDot && !(characterPos.x === x && characterPos.y === y) && (
+                                    <img 
+                                        src={ICONS[cell.color]} 
+                                        alt={cell.color}
+                                        className="dot"
+                                        draggable="false"
+                                        style={{width: 30, height: 30, userSelect: 'none'}}
+                                    />
                                 )}
                                 {characterPos.x === x && characterPos.y === y && (
-                                    <div className="character" />
+                                    <img 
+                                        src="/icons-gp.png" 
+                                        alt="Character"
+                                        className="character"
+                                        style={{
+                                            position: 'absolute',
+                                            width: 30,
+                                            height: 30,
+                                            left: '50%',
+                                            top: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            pointerEvents: 'none'
+                                        }}
+                                    />
                                 )}
                                 {/* Show path order number in lower right if in path and not animating */}
                                 {isPath && !isAnimating && (

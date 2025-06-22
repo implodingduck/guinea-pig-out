@@ -121,16 +121,16 @@ button:focus-visible {
   height: 30px;
   border-radius: 50%;
   transition: transform 0.3s;
+  display: block;
+  /* Remove background-color, add optional border for visibility */
+  border: 2px solid #222;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  object-fit: contain;
 }
-
-.dot.red { background-color: #ff4444; }
-.dot.blue { background-color: #4444ff; }
-.dot.green { background-color: #44ff44; }
 
 .character {
   width: 40px;
   height: 40px;
-  background-color: #ffd700;
   border-radius: 50%;
   position: absolute;
   z-index: 2;
