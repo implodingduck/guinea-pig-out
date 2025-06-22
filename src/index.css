@@ -140,6 +140,7 @@ button:focus-visible {
   margin-top: 20px;
   display: flex;
   gap: 10px;
+  min-height: 44px;
 }
 
 .controls button {

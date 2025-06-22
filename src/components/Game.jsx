@@ -27,6 +27,7 @@ export default function Game() {
         )
         newGrid[CENTER][CENTER].isEmpty = true // Character starting position
         setGrid(newGrid)
+        setPath([{ x: CENTER, y: CENTER }])
     }
 
     const isAdjacent = (pos1, pos2) => {
@@ -45,9 +46,9 @@ export default function Game() {
         }
 
         // Starting a new path
-        if (path.length === 0) {
+        if (path.length === 1) {
             if (isAdjacent({ x: characterPos.x, y: characterPos.y }, { x, y })) {
-                setPath([{ x, y }])
+                setPath([...path, { x, y }])
                 setSelectedColor(cell.color)
             }
             return
@@ -65,13 +66,15 @@ export default function Game() {
 
     // Animate character along the path
     useEffect(() => {
-        if (!isAnimating || path.length === 0) return
+        if (!isAnimating || path.length === 1) return
         if (animStep >= path.length) {
-            // Animation done, remove dots and update grid
+            // // Animation done, remove dots and update grid
             const newGrid = [...grid]
+            
             path.forEach(({ x, y }) => {
                 newGrid[y][x].isEmpty = true
             })
+            newGrid[characterPos.y][characterPos.x].isEmpty = false // Character starting position
             // Make dots fall
             for (let x = 0; x < GRID_SIZE; x++) {
                 let emptySpaces = []
@@ -94,8 +97,9 @@ export default function Game() {
                     }
                 })
             }
+            
             setGrid(newGrid)
-            setPath([])
+            setPath([{ x: characterPos.x, y: characterPos.y }])
             setSelectedColor(null)
             setIsAnimating(false)
             setAnimStep(0)
@@ -103,20 +107,20 @@ export default function Game() {
         }
         // Move character to next step
         const nextPos = path[animStep]
-        setTimeout(() => {
-            setCharacterPos({ x: nextPos.x, y: nextPos.y })
+        setCharacterPos({ x: nextPos.x, y: nextPos.y })
+        setTimeout(() => {    
             setAnimStep(s => s + 1)
-        }, 180)
-    }, [isAnimating, animStep, path, grid])
+        }, 360)
+    }, [isAnimating, animStep, path, grid, setCharacterPos])
 
     const confirmPath = () => {
-        if (path.length === 0 || isAnimating) return
+        if (path.length === 1 || isAnimating) return
         setIsAnimating(true)
         setAnimStep(0)
     }
 
     const cancelPath = () => {
-        setPath([])
+        setPath([{ x: characterPos.x, y: characterPos.y }])
         setSelectedColor(null)
     }
 
@@ -219,19 +223,21 @@ export default function Game() {
                                         padding: '0 4px',
                                         pointerEvents: 'none',
                                         zIndex: 3
-                                    }}>{pathOrder + 1}</span>
+                                    }}>{pathOrder}</span>
                                 )}
                             </div>
                         )
                     })
                 )}
             </div>
-            {path.length > 0 && !isAnimating && (
+            
                 <div className="controls">
+                    {path.length > 0 && !isAnimating && (<>
                     <button onClick={confirmPath}>Confirm Path</button>
                     <button onClick={cancelPath}>Cancel</button>
+                    </>)}
                 </div>
-            )}
+            
         </div>
     )
 }
