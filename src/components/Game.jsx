@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 
 const ICONS = {
-    red: '/icons-redpepper.png',
-    green: '/icons-lettuce.png',
-    orange: '/icons-carrot.png',
+    red: 'https://implodingduck.github.io/guinea-pig-out/icons-redpepper.png',
+    green: 'https://implodingduck.github.io/guinea-pig-out/icons-lettuce.png',
+    orange: 'https://implodingduck.github.io/guinea-pig-out/icons-carrot.png',
 }
 const COLORS = ['red', 'green', 'orange']
 const GRID_SIZE = 7
@@ -228,7 +228,7 @@ export default function Game() {
                                 )}
                                 {characterPos.x === x && characterPos.y === y && (
                                     <img 
-                                        src="/icons-gp.png" 
+                                        src="https://implodingduck.github.io/guinea-pig-out/icons-gp.png" 
                                         alt="Character"
                                         className="character"
                                         style={{
